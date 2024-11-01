@@ -1,0 +1,110 @@
+<%inc
+#include "models/Library.h"
+#include <memory>
+%>
+
+<%c++
+auto library = @@.get<std::shared_ptr<Library>>("library");
+%>
+
+<%view index %>
+<%c++ if(library) { %>
+<div class="row">
+  <form id="uploader" action="/api/openai/vision" enctype="multipart/form-data" method="POST">
+    <div>
+      <div id="image-bucket">
+        <div>Drop images here</div>
+        <div id="image-bucket-thumbnails"></div>
+      </div>
+      <input name="section" placeholder="Section" value="">
+    </div>
+    <button type="submit" disabled>Submit</button>
+  </form>
+</div>
+<div class="row">
+  <table id="library">
+    <thead>
+      <tr>
+        <th>Title</th>
+        <th>Author</th>
+        <th>Type</th>
+        <th>Published</th>
+        <th>Edition</th>
+        <th>Serial Numbers</th>
+      </tr>
+    </thead>
+    <%c++ for(const auto& section : library->getSections()) { %>
+      <tbody>
+        <tr><td colspan="6" class="section"><%=section->getName()%></td></tr>
+      </tbody>
+      <tbody>
+      <%c++ for(const auto& entry : section->getEntries()) { %>
+        <tr data-id="<%=entry->getId()%>" class="entry">
+          <td><%=entry->getTitle()%></td>
+          <td><%=entry->getAuthor()%></td>
+          <td><%=entry->getMediaType()%></td>
+          <td><%=entry->getPublisher()%></td>
+          <td><%=entry->getEdition()%></td>
+          <td><%=entry->getSerialNumbers()%></td>
+        </tr>
+      <%c++ } %>
+      </tbody>
+    <%c++ } %>
+  </table>
+</div>
+<dialog>
+  <form id="editor" action="." method="post">
+    <div class="inputs">
+        <div class="field">
+            <label for="name">Title</label>
+            <input id="title" name="title" placeholder="Title" />
+        </div>
+        <div class="field">
+            <label for="mediaType">Type</label>
+            <input id="mediaType" name="mediaType" />
+        </div>
+        <div class="field">
+            <label for="publishedBy">Published By</label>
+            <input id="publishedBy" name="publishedBy" />
+        </div>
+        <div class="field">
+            <label for="publishedLocation">Published Location</label>
+            <input id="publishedLocation" name="publishedLocation" />
+        </div>
+        <div class="field">
+            <label for="editionYear">Edition Year</label>
+            <input id="editionYear" name="editionYear" />
+        </div>
+        <div class="field">
+            <label for="catalogNumber">Catalog</label>
+            <input id="catalogNumber" name="catalogNumber" />
+        </div>
+        <div class="field">
+            <label for="author">Author</label>
+            <input id="author" name="author" />
+        </div>
+        <div class="field">
+            <label for="section">Section</label>
+            <input id="section" name="section" />
+        </div>
+        <div class="field">
+            <label for="publishedOn">Published On</label>
+            <input id="publishedOn" name="publishedOn" />
+        </div>
+        <div class="field">
+            <label for="edition">Edition</label>
+            <input id="edition" name="edition" />
+        </div>
+        <div class="field">
+            <label for="serialNumber">ISBN</label>
+            <input id="serialNumber" name="serialNumber" />
+        </div>
+    </div>
+    <div id="editor-actions">
+      <button type="submit">Update</button>
+      <button class="danger">Delete</button>
+    </div>
+  </form>
+</dialog>
+<%c++ } %>
+<%view end%>

@@ -1,0 +1,10 @@
+[requires]
+jsoncpp/1.9.4
+sqlite3/3.36.0
+opencv/4.10.0
+
+[generators]
+CMakeDeps
+CMakeToolchain
+[layout]
+cmake_layout
