@@ -1,4 +1,15 @@
-link_libraries(${PROJECT_NAME})
+cmake_minimum_required(VERSION 3.14)
+project(chrs-cms-cpp CXX)
+
+# Set C++ standard
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+# Add compile flags
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    add_compile_options(-g -Wall -Wextra)
+endif()
 
 # Find required packages
 find_package(Drogon REQUIRED)
@@ -25,7 +36,7 @@ set(HEADERS
 )
 
 # Create executable
-add_executable(cms ${SOURCES} ${HEADERS})
+add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
 
 # Include directories
 target_include_directories(${PROJECT_NAME} PRIVATE
@@ -43,15 +54,57 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     jsoncpp_lib
 )
 
-drogon_create_views(view
-                    ${CMAKE_CURRENT_SOURCE_DIR}/templates
-                    ${CMAKE_CURRENT_BINARY_DIR})
+# Copy templates and static files
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/templates DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/static DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
+# Install configuration
+install(TARGETS ${PROJECT_NAME}
+    RUNTIME DESTINATION bin
+)
 
-set(project_targets
-    cms)
+install(DIRECTORY templates/
+    DESTINATION share/${PROJECT_NAME}/templates
+)
 
-set_property(TARGET ${project_targets}
-             PROPERTY CXX_STANDARD ${DROGON_CXX_STANDARD})
-set_property(TARGET ${project_targets} PROPERTY CXX_STANDARD_REQUIRED ON)
-set_property(TARGET ${project_targets} PROPERTY CXX_EXTENSIONS OFF)
+install(DIRECTORY static/
+    DESTINATION share/${PROJECT_NAME}/static
+)
+
+# Generate CSP templates
+# This assumes Drogon's template compiler is available as drogon_ctl
+add_custom_command(
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/templates/index.h
+    COMMAND drogon_ctl
+    ARGS create view ${CMAKE_CURRENT_SOURCE_DIR}/templates/index.csp
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/templates/index.csp
+    COMMENT "Generating CSP template headers"
+)
+
+# Testing configuration (optional)
+option(BUILD_TESTING "Build the testing tree." OFF)
+if(BUILD_TESTING)
+    enable_testing()
+    add_subdirectory(tests)
+endif()
+
+# Version information
+set(PROJECT_VERSION_MAJOR 1)
+set(PROJECT_VERSION_MINOR 0)
+set(PROJECT_VERSION_PATCH 0)
+
+# Configure version header
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/config/version.h.in
+    ${CMAKE_CURRENT_BINARY_DIR}/include/version.h
+)
+
+# Output directories
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+
+# Print status information
+message(STATUS "Project: ${PROJECT_NAME}")
+message(STATUS "Version: ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}")
+message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
